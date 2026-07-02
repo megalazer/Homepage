@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTERNETWEBSITE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kode+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #D6E2F0;
+    --panel-bg: #E6EEF8;
+    --container-bg: rgba(220, 230, 242, 0.72);
+    --black: #1A1A1A;
+    --orange: #FF5A00;
+    --gray-200: #D8DAE0;
+    --gray-300: #B8BCC6;
+    --gray-400: #9EA2AC;
+    --gray-500: #7A7E88;
+    --gray-700: #3D3F45;
+    --white: #FFFFFF;
+
+    --mono: 'Kode Mono', monospace;
+    --display: 'Kode Mono', monospace;
+
+    --fast: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --med: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+    --slow: 500ms cubic-bezier(0.22, 1, 0.36, 1);
+    --container-collapsed: 360px;
+    --container-expanded: 720px;
+    --preview-width: 420px;
+    --expand-speed: 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  body[data-theme="blood"] {
+    --bg: #0A0202; --panel-bg: #140505; --container-bg: rgba(28, 8, 8, 0.72);
+    --black: #FFD6D6; --orange: #FF0000; --gray-200: #3D1414;
+    --gray-300: #5C1A1A; --gray-400: #8A2424; --gray-500: #B83333;
+    --gray-700: #FF6666; --white: #FFFFFF;
+  }
+
+  body[data-theme="y2k"] {
+    --bg: #E0F2F1; --panel-bg: #B2DFDB; --container-bg: rgba(128, 203, 196, 0.72);
+    --black: #004D40; --orange: #00BFA5; --gray-200: #4DB6AC;
+    --gray-300: #26A69A; --gray-400: #00897B; --gray-500: #00796B;
+    --gray-700: #00695C; --white: #FFFFFF;
+  }
+
+  body[data-theme="terminal"] {
+    --bg: #001A00; --panel-bg: #002200; --container-bg: rgba(0, 45, 0, 0.72);
+    --black: #4AE54A; --orange: #5BFF5B; --gray-200: #0A3A0A;
+    --gray-300: #1A5A1A; --gray-400: #38A838; --gray-500: #52C852;
+    --gray-700: #6FE66F; --white: #9FFF9F;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--display);
+    color: var(--black);
+    text-transform: uppercase;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    transition: background var(--slow), color var(--slow);
+  }
+
+  .page-frame {
+    position: relative; width: 100vw; height: 100vh;
+    background: var(--panel-bg); overflow: hidden;
+    transition: background var(--slow);
+  }
+
+  .page-corner {
+    position: absolute; width: 22px; height: 22px;
+    border-color: var(--gray-400); border-style: solid;
+    pointer-events: none; z-index: 20; transition: border-color var(--slow);
+  }
+  .page-corner.tl { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
+  .page-corner.tr { top: 10px; right: 10px; border-width: 2px 2px 0 0; }
+  .page-corner.bl { bottom: 10px; left: 10px; border-width: 0 0 2px 2px; }
+  .page-corner.br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+
+  .hud-bg {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 50vw; min-width: 600px; overflow: hidden; z-index: 1;
+  }
+
+  .hud-circles {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-30%, -50%); width: 640px; height: 640px;
+  }
+
+  .ring {
+    position: absolute; top: 50%; left: 50%; border-radius: 50%;
+    border: 1px solid var(--gray-300); transition: border-color var(--slow);
+  }
+  .ring-1 { width: 540px; height: 540px; margin: -270px 0 0 -270px; border-width: 1.5px; animation: cw 60s linear infinite; }
+  .ring-1::before { content: ''; position: absolute; top: -5px; left: 50%; width: 8px; height: 8px; background: var(--gray-400); transform: translateX(-50%) rotate(45deg); }
+  .ring-2 { width: 440px; height: 440px; margin: -220px 0 0 -220px; border-style: dashed; animation: ccw 45s linear infinite; }
+  .ring-3 { width: 360px; height: 360px; margin: -180px 0 0 -180px; border-width: 2.5px; border-color: var(--gray-400); animation: cw 35s linear infinite; }
+  .ring-3::before, .ring-3::after { content: ''; position: absolute; left: 50%; width: 2px; height: 14px; background: var(--gray-500); transform: translateX(-50%); }
+  .ring-3::before { top: -1px; } .ring-3::after { bottom: -1px; }
+  .ring-4 { width: 280px; height: 280px; margin: -140px 0 0 -140px; animation: ccw 28s linear infinite; }
+  .ring-4::before { content: ''; position: absolute; top: 50%; right: -6px; width: 10px; height: 10px; border: 1.5px solid var(--gray-400); background: var(--panel-bg); transform: translateY(-50%); }
+  .ring-5 { width: 180px; height: 180px; margin: -90px 0 0 -90px; animation: cw 20s linear infinite; }
+  .ring-5::before { content: ''; position: absolute; top: 50%; left: -5px; width: 8px; height: 8px; background: var(--orange); opacity: 0.5; transform: translateY(-50%); }
+  .ring-6 { width: 100px; height: 100px; margin: -50px 0 0 -50px; border-width: 0.8px; animation: ccw 15s linear infinite; }
+
+  .center-cross { position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; }
+  .center-cross::before, .center-cross::after { content: ''; position: absolute; background: var(--gray-400); }
+  .center-cross::before { top: 50%; left: 0; width: 100%; height: 1px; }
+  .center-cross::after { left: 50%; top: 0; width: 1px; height: 100%; }
+
+  .center-target { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border: 1.5px solid var(--gray-400); }
+
+  .ring-el { position: absolute; border: 1px solid var(--gray-400); background: var(--panel-bg); }
+  .ring-el-1 { width: 12px; height: 12px; top: 50%; left: 50%; margin: -50px 0 0 100px; transform: rotate(45deg); animation: ccw 28s linear infinite; }
+  .ring-el-2 { width: 10px; height: 10px; top: 50%; left: 50%; margin: 30px 0 0 -140px; animation: cw 35s linear infinite; }
+
+  .arc-svg { position: absolute; top: 50%; left: 50%; transform: translate(-30%, -50%); width: 640px; height: 640px; pointer-events: none; }
+  .arc-s { fill: none; stroke: var(--gray-400); stroke-width: 2; stroke-linecap: round; }
+  .arc-t { fill: none; stroke: var(--gray-300); stroke-width: 0.8; }
+  .arc-o { fill: none; stroke: var(--orange); stroke-width: 1.5; opacity: 0.6; }
+
+  @keyframes cw { to { transform: rotate(360deg); } }
+  @keyframes ccw { to { transform: rotate(-360deg); } }
+
+  .main-container {
+    position: absolute; top: 5%; bottom: 5%; left: 4vw;
+    width: var(--container-collapsed); background: var(--container-bg);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 10; transition: width var(--expand-speed), background var(--slow); overflow: visible;
+  }
+  .main-container.expanded { width: var(--container-expanded); }
+
+  .c-bracket {
+    position: absolute; width: 14px; height: 14px; border-color: var(--gray-400); border-style: solid;
+    z-index: 12; transition: all var(--expand-speed), border-color var(--slow);
+  }
+  .c-bracket.tl { top: -3px; left: -3px; border-width: 2px 0 0 2px; }
+  .c-bracket.tr { top: -3px; right: -3px; border-width: 2px 2px 0 0; }
+  .c-bracket.bl { bottom: -3px; left: -3px; border-width: 0 0 2px 2px; }
+  .c-bracket.br { bottom: -3px; right: -3px; border-width: 0 2px 2px 0; }
+
+  .edge-dots {
+    position: absolute; left: -8px; top: 0; bottom: 0; width: 4px;
+    display: flex; flex-direction: column; justify-content: space-around; padding: 60px 0; z-index: 11;
+  }
+  .edge-dot { width: 3px; height: 3px; background: var(--gray-400); border-radius: 50%; }
+
+  .left-content {
+    position: absolute; top: 0; left: 0; width: var(--container-collapsed); height: 100%;
+    padding: 28px 24px 24px 28px; display: flex; flex-direction: column; z-index: 5;
+  }
+
+  .tab-row { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; justify-content: flex-end; padding-right: 4px; }
+  .tab-num { font-family: var(--mono); font-size: 10px; color: var(--gray-500); background: var(--gray-200); padding: 1px 6px; border-radius: 2px; letter-spacing: 1px; }
+  .tab-box { width: 22px; height: 10px; border: 1.5px solid var(--gray-300); border-radius: 2px; }
+  .tab-box.active { background: var(--gray-400); }
+
+  .header { font-size: 34px; font-weight: 700; letter-spacing: 4px; line-height: 1; margin-bottom: 14px; display: flex; align-items: baseline; gap: 4px; }
+  .header .slashes { color: var(--gray-500); font-size: 30px; }
+  .header .arrow { font-size: 22px; margin-left: 4px; }
+
+  .nav-column { display: flex; flex-direction: column; gap: 3px; }
+  .nav-item { position: relative; cursor: pointer; }
+  .nav-index { font-family: var(--mono); font-size: 9px; color: var(--gray-400); display: flex; align-items: center; gap: 6px; justify-content: flex-end; margin-bottom: 2px; letter-spacing: 2px; padding-right: 2px; }
+  .nav-index::before { content: ''; width: 3px; height: 3px; background: var(--gray-400); border-radius: 50%; }
+
+  .nav-bar-wrap { display: flex; align-items: center; gap: 6px; }
+
+  .nav-bar {
+    flex: 1; display: flex; align-items: center; justify-content: space-between;
+    background: var(--black); color: var(--white); padding: 7px 16px;
+    font-size: 22px; font-weight: 700; letter-spacing: 4px; border-left: 3px solid var(--gray-400);
+    transition: color 0.3s ease;
+    clip-path: polygon(0 0, 100% 0, 97% 100%, 0% 100%); user-select: none;
+    position: relative; overflow: hidden; z-index: 1;
+  }
+
+  .nav-bar span { position: relative; z-index: 2; }
+
+  /* Sheen hover: left-to-right diagonal sweep */
+  .nav-bar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      110deg,
+      transparent 0%,
+      transparent 30%,
+      rgba(255, 255, 255, 0.25) 50%,
+      transparent 70%,
+      transparent 100%
+    );
+    z-index: 1;
+    transition: left 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .nav-bar:hover::before { left: 170%; }
+
+  .nav-arrow { font-size: 12px; transition: transform var(--fast); display: inline-block; }
+  .nav-item.active .nav-arrow { transform: rotate(180deg); }
+  .nav-hash { display: flex; gap: 2px; opacity: 0; transition: opacity var(--fast); align-self: center; }
+  .nav-hash span { display: inline-block; width: 10px; height: 22px; background: repeating-linear-gradient(-55deg, var(--gray-300), var(--gray-300) 2px, transparent 2px, transparent 5px); }
+  .nav-item.active .nav-hash { opacity: 1; }
+
+  .nav-divider { height: 1px; background: var(--gray-300); margin: 2px 0 2px 30px; opacity: 0.4; }
+
+  .progress-area { margin-top: auto; padding-top: 14px; }
+  .progress-track { width: 100%; height: 5px; background: var(--gray-200); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: var(--black); border-radius: 2px; transition: width var(--med), background var(--slow); }
+  .progress-segments { display: flex; gap: 3px; margin-top: 5px; }
+  .progress-segments span { flex: 1; height: 3px; background: var(--gray-300); border-radius: 1px; transition: background var(--fast); }
+  .progress-segments span.lit { background: var(--black); }
+
+  .icon-row { display: flex; gap: 8px; margin-top: 12px; }
+  .icon-btn { width: 38px; height: 38px; border: 2px solid var(--gray-300); border-radius: 3px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: transparent; color: var(--black); transition: border-color var(--fast), background var(--fast), color var(--slow); }
+  .icon-btn:hover { border-color: var(--black); background: rgba(0,0,0,0.05); }
+  .icon-btn svg { width: 17px; height: 17px; }
+
+  .right-content {
+    position: absolute; top: 0; left: var(--container-collapsed);
+    width: calc(var(--container-expanded) - var(--container-collapsed)); height: 100%;
+    padding: 28px 24px; display: flex; flex-direction: column; align-items: center;
+    opacity: 0; transition: opacity 150ms ease 0s; z-index: 5;
+  }
+  .main-container.expanded .right-content { opacity: 1; transition: opacity 300ms ease 250ms; }
+
+  .right-header { font-size: 28px; font-weight: 700; letter-spacing: 5px; align-self: flex-end; margin-bottom: 12px; color: var(--black); }
+  .right-header .slashes { color: var(--gray-500); }
+
+  .video-frame { position: relative; width: 280px; margin: 0 auto; }
+
+  .vid-bracket {
+    position: absolute; width: 14px; height: 14px; border-color: var(--gray-500); border-style: solid; z-index: 3;
+    opacity: 0; transition: all 150ms ease 0s;
+  }
+  .vid-bracket.tl { top: -4px; left: -4px; border-width: 2px 0 0 2px; }
+  .vid-bracket.tr { top: -4px; right: -4px; border-width: 2px 2px 0 0; }
+  .vid-bracket.bl { bottom: -4px; left: -4px; border-width: 0 0 2px 2px; }
+  .vid-bracket.br { bottom: -4px; right: -4px; border-width: 0 2px 2px 0; }
+
+  .main-container.expanded .vid-bracket { opacity: 1; transition: all 300ms ease 400ms; }
+
+  .video-thumb {
+    width: 100%; aspect-ratio: 4/3; border-radius: 5px; overflow: hidden;
+    background: linear-gradient(160deg, var(--gray-400) 0%, var(--gray-500) 40%, var(--gray-300) 70%, var(--gray-700) 100%);
+    position: relative; transition: background var(--slow);
+  }
+  .video-thumb video, .video-thumb img, .video-thumb svg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; z-index: 1;
+  }
+  /* Gray transparent filter overlay for mp4/video feeds */
+  .video-thumb::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      160deg,
+      rgba(120, 124, 135, 0.35) 0%,
+      rgba(80, 84, 92, 0.25) 50%,
+      rgba(60, 64, 70, 0.35) 100%
+    );
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity var(--slow);
+  }
+  /* CRT scanline overlay */
+  .video-thumb::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 3;
+  }
+  .video-thumb .file-label { position: absolute; top: 6px; left: 10px; font-family: var(--mono); font-size: 9px; color: var(--white); opacity: 0.8; letter-spacing: 1px; z-index: 4; }
+
+  @keyframes blinkEffect {
+    0%, 40%, 80%, 100% { opacity: 1; }
+    20%, 60% { opacity: 0; }
+  }
+  .accent-section { margin-top: 14px; text-align: center; width: 100%; }
+  .accent-triangle { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 9px solid var(--orange); margin: 0 auto 4px; transition: border-bottom-color var(--slow); }
+  .accent-bar {
+    background: var(--orange); color: var(--panel-bg); font-weight: 700; font-size: 14px; letter-spacing: 3px;
+    padding: 6px 18px; border-radius: 3px; display: inline-flex; align-items: center; gap: 10px;
+    transition: background var(--slow);
+  }
+  .accent-bar.blink-active { animation: blinkEffect 400ms steps(1) forwards; }
+  .accent-bar .divider { width: 2px; height: 14px; background: rgba(255,255,255,0.4); }
+  .accent-bar .a-arrow { font-size: 9px; color: rgba(255,255,255,0.7); margin-left: 8px; }
+
+  .content-dropdown {
+    max-height: 0; overflow: hidden; opacity: 0; margin-top: 6px; width: 100%;
+    transition: max-height 200ms ease 0s, opacity 150ms ease 0s;
+  }
+  .content-dropdown.open { max-height: 340px; opacity: 1; transition: max-height var(--slow) 0s, opacity 300ms ease 0s; }
+
+  .content-list { padding: 10px 16px; position: relative; background: var(--bg); border-radius: 4px; opacity: 0.95; max-height: 340px; overflow-y: auto; }
+  .content-list::-webkit-scrollbar { width: 4px; }
+  .content-list::-webkit-scrollbar-track { background: transparent; }
+  .content-list::-webkit-scrollbar-thumb { background: var(--gray-400); border-radius: 2px; }
+
+  .content-list-inner { font-size: 13px; font-weight: 600; letter-spacing: 2px; color: var(--gray-700); line-height: 1.8; display: flex; flex-direction: column; gap: 3px; }
+
+  .link-item {
+    position: relative; cursor: pointer; padding: 2px 0 2px 14px;
+    transition: color var(--fast); color: var(--gray-700);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    text-decoration: none;
+  }
+  .link-item::before {
+    content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 2px; background: var(--orange); opacity: 0; transition: opacity var(--fast);
+  }
+  .link-item:hover { color: var(--orange); }
+  .link-item:hover::before { opacity: 1; }
+  .link-item .rss-tag {
+    font-family: var(--mono); font-size: 8px; letter-spacing: 1px;
+    color: var(--gray-400); border: 1px solid var(--gray-300); padding: 1px 4px; border-radius: 2px;
+    transition: color var(--fast), border-color var(--fast);
+  }
+  .link-item:hover .rss-tag { color: var(--orange); border-color: var(--orange); }
+
+  .scroll-arrows { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 2px; }
+  .scroll-arrow { font-size: 10px; color: var(--gray-400); cursor: pointer; transition: color var(--fast); user-select: none; }
+  .scroll-arrow:hover { color: var(--orange); }
+
+  .bottom-slider { margin-top: 10px; display: flex; align-items: center; gap: 6px; justify-content: center; width: 100%; }
+  .bottom-slider .track { flex: 1; max-width: 160px; height: 1.5px; background: var(--gray-300); position: relative; }
+  .bottom-slider .thumb { position: absolute; top: -10px; left: 0%; font-family: var(--mono); font-size: 10px; color: var(--orange); font-weight: 700; transition: left var(--med), color var(--slow); }
+  .bottom-slider .sb { font-family: var(--mono); font-size: 13px; color: var(--gray-300); }
+
+  .date-display { position: absolute; bottom: 20px; right: 28px; font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--gray-500); z-index: 20; }
+  .date-display .day { color: var(--orange); transition: color var(--slow); }
+
+  /* ═══ RSS PREVIEW PANEL ═══ */
+  .preview-panel {
+    position: absolute;
+    top: 5%; bottom: 5%;
+    left: calc(4vw + var(--container-expanded) + 24px);
+    width: var(--preview-width);
+    background: var(--container-bg);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: top left;
+    clip-path: inset(0 100% 100% 0);
+    transition: opacity 200ms ease,
+                clip-path 550ms cubic-bezier(0.22, 1, 0.36, 1),
+                background var(--slow);
+  }
+  .preview-panel.open {
+    opacity: 1;
+    pointer-events: auto;
+    clip-path: inset(0 0 0 0);
+  }
+
+  /* Preview brackets - animate diagonally from TL to BR on open, reverse on close */
+  .p-bracket {
+    position: absolute; width: 14px; height: 14px;
+    border-color: var(--gray-400); border-style: solid;
+    z-index: 17;
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+                transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                border-color var(--slow);
+  }
+  .p-bracket.tl { top: -3px; left: -3px; border-width: 2px 0 0 2px; }
+  .p-bracket.tr { top: -3px; right: -3px; border-width: 2px 2px 0 0; }
+  .p-bracket.bl { bottom: -3px; left: -3px; border-width: 0 0 2px 2px; }
+  .p-bracket.br { bottom: -3px; right: -3px; border-width: 0 2px 2px 0; }
+
+  /* Stagger opening: TL first, TR + BL middle, BR last — diagonal sweep */
+  .preview-panel.open .p-bracket { opacity: 1; transform: scale(1); }
+  .preview-panel.open .p-bracket.tl { transition-delay: 120ms; }
+  .preview-panel.open .p-bracket.tr { transition-delay: 280ms; }
+  .preview-panel.open .p-bracket.bl { transition-delay: 280ms; }
+  .preview-panel.open .p-bracket.br { transition-delay: 440ms; }
+
+  /* Closing reverses: BR goes first, TL goes last */
+  .preview-panel .p-bracket.br { transition-delay: 0ms; }
+  .preview-panel .p-bracket.bl { transition-delay: 140ms; }
+  .preview-panel .p-bracket.tr { transition-delay: 140ms; }
+  .preview-panel .p-bracket.tl { transition-delay: 280ms; }
+
+  .preview-inner {
+    position: absolute; inset: 0;
+    padding: 24px 22px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .preview-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--gray-300);
+  }
+  .preview-title {
+    font-size: 18px; font-weight: 700; letter-spacing: 3px;
+    color: var(--black); display: flex; align-items: baseline; gap: 6px;
+  }
+  .preview-title .slashes { color: var(--gray-500); font-size: 14px; }
+  .preview-close {
+    font-family: var(--mono); font-size: 11px; color: var(--gray-500);
+    cursor: pointer; padding: 4px 8px; border: 1px solid var(--gray-300);
+    border-radius: 2px; letter-spacing: 1px;
+    transition: all var(--fast);
+  }
+  .preview-close:hover { color: var(--orange); border-color: var(--orange); }
+
+  .preview-meta {
+    font-family: var(--mono); font-size: 9px;
+    color: var(--gray-400); letter-spacing: 1.5px;
+    margin-bottom: 10px; display: flex; justify-content: space-between;
+  }
+  .preview-meta .status { color: var(--orange); }
+
+  .preview-list {
+    flex: 1; overflow-y: auto; padding-right: 6px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .preview-list::-webkit-scrollbar { width: 4px; }
+  .preview-list::-webkit-scrollbar-track { background: var(--gray-200); }
+  .preview-list::-webkit-scrollbar-thumb { background: var(--gray-400); border-radius: 2px; }
+
+  .preview-item {
+    padding: 10px 12px 10px 14px;
+    background: var(--bg);
+    border-left: 2px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--gray-700);
+    display: block;
+    transition: all var(--fast);
+    position: relative;
+  }
+  .preview-item:hover {
+    border-left-color: var(--orange);
+    color: var(--black);
+    background: var(--panel-bg);
+  }
+  .preview-item-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    line-height: 1.4; margin-bottom: 4px;
+    text-transform: none;
+  }
+  .preview-item-meta {
+    font-family: var(--mono); font-size: 8px;
+    color: var(--gray-400); letter-spacing: 1px;
+    display: flex; gap: 8px;
+    text-transform: uppercase;
+  }
+  .preview-item:hover .preview-item-meta { color: var(--gray-500); }
+
+  .preview-loading {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; gap: 12px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--gray-400); letter-spacing: 2px;
+  }
+  .preview-loading .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--gray-300);
+    border-top-color: var(--orange);
+    border-radius: 50%;
+    animation: spin 800ms linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .preview-error {
+    padding: 14px; font-family: var(--mono); font-size: 10px;
+    color: var(--gray-500); letter-spacing: 1px; text-align: center;
+    line-height: 1.6;
+  }
+  .preview-error .fallback-link {
+    display: inline-block; margin-top: 10px; padding: 6px 12px;
+    border: 1px solid var(--gray-300); color: var(--orange);
+    text-decoration: none; border-radius: 2px;
+    transition: border-color var(--fast);
+  }
+  .preview-error .fallback-link:hover { border-color: var(--orange); }
+
+  /* Corner decorations on preview panel */
+  .preview-edge-dots {
+    position: absolute; left: -8px; top: 0; bottom: 0; width: 4px;
+    display: flex; flex-direction: column; justify-content: space-around;
+    padding: 60px 0; z-index: 16;
+    opacity: 0; transition: opacity 400ms ease 200ms;
+  }
+  .preview-panel.open .preview-edge-dots { opacity: 1; }
+  .preview-edge-dots .edge-dot {
+    width: 3px; height: 3px; background: var(--gray-400); border-radius: 50%;
+  }
+</style>
+</head>
+<body data-theme="default">
+
+<div class="page-frame">
+  <div class="page-corner tl"></div><div class="page-corner tr"></div>
+  <div class="page-corner bl"></div><div class="page-corner br"></div>
+
+  <div class="hud-bg">
+    <div class="hud-circles">
+      <div class="ring ring-1"></div><div class="ring ring-2"></div><div class="ring ring-3"></div>
+      <div class="ring ring-4"></div><div class="ring ring-5"></div><div class="ring ring-6"></div>
+      <div class="center-cross"></div><div class="center-target"></div>
+      <div class="ring-el ring-el-1"></div><div class="ring-el ring-el-2"></div>
+    </div>
+    <svg class="arc-svg" viewBox="0 0 640 640">
+      <path class="arc-s" d="M 320 40 A 280 280 0 0 1 560 200"/>
+      <path class="arc-t" d="M 320 60 A 260 260 0 0 1 540 210"/>
+      <path class="arc-s" d="M 100 420 A 280 280 0 0 1 320 600"/>
+      <path class="arc-t" d="M 220 130 A 180 180 0 0 1 500 280"/>
+      <path class="arc-t" d="M 140 360 A 180 180 0 0 1 280 520"/>
+      <path class="arc-o" d="M 200 320 A 40 40 0 0 1 200 280"/>
+      <line x1="320" y1="38" x2="320" y2="52" style="stroke: var(--gray-400); stroke-width: 1.5;"/>
+      <line x1="562" y1="320" x2="548" y2="320" style="stroke: var(--gray-400); stroke-width: 1.5;"/>
+      <line x1="320" y1="602" x2="320" y2="588" style="stroke: var(--gray-400); stroke-width: 1;"/>
+      <line x1="78" y1="320" x2="92" y2="320" style="stroke: var(--gray-400); stroke-width: 1;"/>
+      <circle cx="420" cy="120" r="3" fill="none" style="stroke: var(--gray-400); stroke-width: 1;"/>
+      <circle cx="180" cy="460" r="2.5" fill="none" style="stroke: var(--gray-400); stroke-width: 1;"/>
+      <circle cx="500" cy="400" r="2" style="fill: var(--gray-300);"/>
+    </svg>
+  </div>
+
+  <div class="main-container" id="mainContainer">
+    <div class="c-bracket tl"></div><div class="c-bracket tr"></div>
+    <div class="c-bracket bl"></div><div class="c-bracket br"></div>
+
+    <div class="edge-dots">
+      <div class="edge-dot"></div><div class="edge-dot"></div><div class="edge-dot"></div><div class="edge-dot"></div>
+      <div class="edge-dot"></div><div class="edge-dot"></div><div class="edge-dot"></div><div class="edge-dot"></div>
+    </div>
+
+    <div class="left-content">
+      <div class="tab-row">
+        <span class="tab-num" id="tabNum">14</span>
+        <div class="tab-box"></div><div class="tab-box"></div><div class="tab-box"></div><div class="tab-box active"></div>
+      </div>
+
+      <div class="header">
+        <span class="slashes">//</span> STRT <span class="arrow">↙</span>
+      </div>
+
+      <div class="nav-column">
+        <div class="nav-item" data-index="0">
+          <div class="nav-index">001</div>
+          <div class="nav-bar-wrap">
+            <div class="nav-bar"><span>DAILY</span><span class="nav-arrow">▶</span></div>
+            <div class="nav-hash"><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="nav-divider"></div>
+
+        <div class="nav-item" data-index="1">
+          <div class="nav-index">002</div>
+          <div class="nav-bar-wrap">
+            <div class="nav-bar"><span>WORK</span><span class="nav-arrow">▶</span></div>
+            <div class="nav-hash"><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="nav-divider"></div>
+
+        <div class="nav-item" data-index="2">
+          <div class="nav-index">003</div>
+          <div class="nav-bar-wrap">
+            <div class="nav-bar"><span>FEED</span><span class="nav-arrow">▶</span></div>
+            <div class="nav-hash"><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="nav-divider"></div>
+
+        <div class="nav-item" data-index="3">
+          <div class="nav-index">004</div>
+          <div class="nav-bar-wrap">
+            <div class="nav-bar"><span>INFO</span><span class="nav-arrow">▶</span></div>
+            <div class="nav-hash"><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-area">
+        <div class="progress-segments">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="progress-track" style="margin-top:5px;">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="icon-row" id="themeButtons">
+        <div class="icon-btn" title="Default Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12c2-4 5-6 8-2s6 2 8-2"/><path d="M4 17c2-4 5-6 8-2s6 2 8-2"/></svg></div>
+        <div class="icon-btn" title="Blood/Machine Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12,3 22,19 2,19"/></svg></div>
+        <div class="icon-btn" title="Y2K Frost Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 20L10 4"/><path d="M12 20L18 4"/></svg></div>
+        <div class="icon-btn" title="Terminal Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2" stroke-linecap="round"/></svg></div>
+      </div>
+    </div>
+
+    <div class="right-content">
+      <div class="right-header"><span class="slashes">//</span> <span id="rightHeaderLabel">DAILY</span> <span style="font-size:20px;">↙</span></div>
+
+      <div class="video-frame">
+        <div class="vid-bracket tl"></div><div class="vid-bracket tr"></div>
+        <div class="vid-bracket bl"></div><div class="vid-bracket br"></div>
+        <div class="video-thumb" id="videoThumb">
+          <span class="file-label" id="fileLabel">01.feed</span>
+          <svg width="100%" height="100%" viewBox="0 0 280 210" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color: var(--gray-400);"/><stop offset="60%" style="stop-color: var(--gray-500);"/><stop offset="100%" style="stop-color: var(--gray-700);"/></linearGradient>
+              <linearGradient id="bldg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color: var(--gray-200);"/><stop offset="100%" style="stop-color: var(--gray-500);"/></linearGradient>
+            </defs>
+            <rect width="280" height="210" fill="url(#sky)"/>
+            <rect x="20" y="50" width="22" height="160" fill="url(#bldg)" opacity="0.7"/>
+            <rect x="50" y="30" width="18" height="180" fill="url(#bldg)" opacity="0.8"/>
+            <rect x="78" y="65" width="30" height="145" fill="url(#bldg)" opacity="0.6"/>
+            <rect x="115" y="20" width="24" height="190" fill="url(#bldg)" opacity="0.9"/>
+            <rect x="148" y="48" width="20" height="162" fill="url(#bldg)" opacity="0.7"/>
+            <rect x="175" y="60" width="32" height="150" fill="url(#bldg)" opacity="0.5"/>
+            <rect x="215" y="28" width="22" height="182" fill="url(#bldg)" opacity="0.8"/>
+            <rect x="245" y="72" width="25" height="138" fill="url(#bldg)" opacity="0.6"/>
+            <g style="stroke: var(--white); stroke-width: 0.4; opacity: 0.25;">
+              <line x1="118" y1="35" x2="118" y2="210"/><line x1="128" y1="35" x2="128" y2="210"/>
+              <line x1="55" y1="45" x2="55" y2="210"/><line x1="220" y1="42" x2="220" y2="210"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="accent-section">
+        <div class="accent-triangle"></div>
+        <div class="accent-bar" id="accentBarWrap">
+          <span class="divider"></span>
+          <span id="accentLabel">DAILY 01</span>
+          <span class="a-arrow">▶</span>
+        </div>
+      </div>
+
+      <div class="content-dropdown" id="contentDropdown">
+        <div class="content-list">
+          <div class="scroll-arrows"><span class="scroll-arrow">▲</span><span class="scroll-arrow" style="margin-top:3px;">▼</span></div>
+          <div class="content-list-inner" id="contentListInner"></div>
+        </div>
+      </div>
+
+      <div class="bottom-slider">
+        <span class="sb">⌐</span>
+        <div class="track"><span class="thumb" id="sliderThumb">01</span></div>
+        <span class="sb">¬</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RSS Preview Panel -->
+  <div class="preview-panel" id="previewPanel">
+    <div class="p-bracket tl"></div><div class="p-bracket tr"></div>
+    <div class="p-bracket bl"></div><div class="p-bracket br"></div>
+    <div class="preview-edge-dots">
+      <div class="edge-dot"></div><div class="edge-dot"></div><div class="edge-dot"></div>
+      <div class="edge-dot"></div><div class="edge-dot"></div><div class="edge-dot"></div>
+    </div>
+    <div class="preview-inner">
+      <div class="preview-header">
+        <div class="preview-title"><span class="slashes">//</span> <span id="previewTitle">FEED</span></div>
+        <div class="preview-close" id="previewClose">[ CLOSE ]</div>
+      </div>
+      <div class="preview-meta">
+        <span>SRC: <span id="previewSource">—</span></span>
+        <span class="status" id="previewStatus">LOADING</span>
+      </div>
+      <div class="preview-list" id="previewList">
+        <div class="preview-loading">
+          <div class="spinner"></div>
+          <div>FETCHING</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="date-display" id="dateDisplay">JAN . <span class="day">01</span></div>
+</div>
+
+<script>
+  // ═══ DATA ═══
+  // rss: true means the link opens in the preview panel
+  // url: where the item opens/fetches from
+  // feed: RSS feed URL (for rss: true items)
+  const sectionData = [
+    {
+      label: 'DAILY',
+      accent: 'DAILY 01',
+      file: '01.feed',
+      thumb: '01',
+      video: 'nostalgia.webm',
+      items: [
+        { name: 'HACKER NEWS',    url: 'https://news.ycombinator.com',  rss: true, feed: 'https://hnrss.org/frontpage' },
+        { name: 'TECHMEME',       url: 'https://techmeme.com',          rss: true, feed: 'https://www.techmeme.com/feed.xml' },
+        { name: 'ARS TECHNICA',   url: 'https://arstechnica.com',       rss: true, feed: 'https://feeds.arstechnica.com/arstechnica/index' },
+        { name: '404 MEDIA',      url: 'https://www.404media.co',       rss: true, feed: 'https://www.404media.co/rss/' },
+        { name: 'THE VERGE',      url: 'https://www.theverge.com',      rss: true, feed: 'https://www.theverge.com/rss/index.xml' },
+        { name: 'REUTERS TOP',    url: 'https://www.reuters.com',       rss: true, feed: 'https://feeds.reuters.com/reuters/topNews' },
+        { name: 'AP NEWS',        url: 'https://apnews.com',            rss: true, feed: 'https://feeds.apnews.com/apf-topnews' },
+        { name: 'BBC WORLD',      url: 'https://www.bbc.com/news/world',rss: true, feed: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+        { name: 'NPR NEWS',       url: 'https://www.npr.org',           rss: true, feed: 'https://feeds.npr.org/1001/rss.xml' },
+        { name: 'PROPUBLICA',     url: 'https://www.propublica.org',    rss: true, feed: 'https://www.propublica.org/feeds/propublica/main' },
+        { name: 'SIMON WILLISON', url: 'https://simonwillison.net',     rss: true, feed: 'https://simonwillison.net/atom/everything/' },
+        { name: 'IMPORT AI',      url: 'https://jack-clark.net',        rss: true, feed: 'https://jack-clark.net/feed/' }
+      ]
+    },
+    {
+      label: 'WORK',
+      accent: 'WORK 02',
+      file: '02.dev',
+      thumb: '02',
+      video: 'myboyfrank.webm',
+      items: [
+        { name: 'GITHUB DASHBOARD', url: 'https://github.com/dashboard', rss: false },
+        { name: 'GITHUB NOTIFICATIONS', url: 'https://github.com/notifications', rss: false },
+        { name: 'EXPO DOCS',        url: 'https://docs.expo.dev',        rss: false },
+        { name: 'REACT NATIVE DOCS',url: 'https://reactnative.dev/docs', rss: false },
+        { name: 'MDN',              url: 'https://developer.mozilla.org',rss: false }
+      ]
+    },
+    {
+      label: 'FEED',
+      accent: 'FEED 03',
+      file: '03.soc',
+      thumb: '03',
+      video: 'inspace.webm',
+      items: [
+        { name: 'X / TWITTER', url: 'https://x.com/home',        rss: false },
+        { name: 'YOUTUBE',     url: 'https://youtube.com/feed/subscriptions', rss: false },
+        { name: 'SPOTIFY',     url: 'https://open.spotify.com',  rss: false },
+        { name: 'YT MUSIC',    url: 'https://music.youtube.com', rss: false }
+      ]
+    },
+    {
+      label: 'INFO',
+      accent: 'INFO 04',
+      file: '04.sys',
+      thumb: '04',
+      video: 'f4.mp4',
+      items: [
+        { name: 'CALENDAR',    url: 'https://calendar.google.com',  rss: false },
+        { name: 'GMAIL',       url: 'https://mail.google.com',      rss: false },
+        { name: 'WEATHER',     url: 'https://wttr.in/Milwaukee',    rss: false },
+        { name: 'DRIVE',       url: 'https://drive.google.com',     rss: false }
+      ]
+    }
+  ];
+
+  // ═══ DATE DISPLAY (live) ═══
+  function updateDate() {
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const now = new Date();
+    const m = months[now.getMonth()];
+    const d = String(now.getDate()).padStart(2, '0');
+    document.getElementById('dateDisplay').innerHTML =
+      `${m} . <span class="day">${d}</span>`;
+    document.getElementById('tabNum').textContent = d;
+  }
+  updateDate();
+  // Update at midnight
+  const msUntilMidnight = (() => {
+    const n = new Date();
+    const t = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
+    return t - n;
+  })();
+  setTimeout(() => { updateDate(); setInterval(updateDate, 86400000); }, msUntilMidnight);
+
+  // ═══ NAV LOGIC ═══
+  const navItems         = document.querySelectorAll('.nav-item');
+  const mainContainer    = document.getElementById('mainContainer');
+  const progressFill     = document.getElementById('progressFill');
+  const progressSegs     = document.querySelectorAll('.progress-segments span');
+  const contentDropdown  = document.getElementById('contentDropdown');
+  const contentListInner = document.getElementById('contentListInner');
+  const accentBarWrap    = document.getElementById('accentBarWrap');
+  const accentLabel      = document.getElementById('accentLabel');
+  const sliderThumb      = document.getElementById('sliderThumb');
+  const fileLabel        = document.getElementById('fileLabel');
+  const rightHeaderLabel = document.getElementById('rightHeaderLabel');
+  const tabBoxes         = document.querySelectorAll('.tab-box');
+
+  const progressMap = [25, 50, 75, 95];
+  let activeIndex = -1;
+
+  navItems.forEach((item, i) => {
+    item.addEventListener('mouseenter', () => {
+      progressFill.style.width = progressMap[i] + '%';
+      progressSegs.forEach((seg, s) => seg.classList.toggle('lit', s < (i + 1) * 2));
+    });
+
+    item.addEventListener('mouseleave', () => {
+      if (activeIndex >= 0) {
+        progressFill.style.width = progressMap[activeIndex] + '%';
+        progressSegs.forEach((seg, s) => seg.classList.toggle('lit', s < (activeIndex + 1) * 2));
+      } else {
+        progressFill.style.width = '0%';
+        progressSegs.forEach(seg => seg.classList.remove('lit'));
+      }
+    });
+
+    item.addEventListener('click', () => {
+      const wasActive = item.classList.contains('active');
+      navItems.forEach(n => n.classList.remove('active'));
+      closePreview();
+
+      if (wasActive) {
+        activeIndex = -1;
+        mainContainer.classList.remove('expanded');
+        contentDropdown.classList.remove('open');
+        progressFill.style.width = '0%';
+        progressSegs.forEach(seg => seg.classList.remove('lit'));
+        tabBoxes.forEach(d => d.classList.remove('active'));
+        tabBoxes[tabBoxes.length - 1].classList.add('active');
+        return;
+      }
+
+      item.classList.add('active');
+      activeIndex = i;
+      mainContainer.classList.add('expanded');
+
+      tabBoxes.forEach(d => d.classList.remove('active'));
+      if (tabBoxes[i]) tabBoxes[i].classList.add('active');
+
+      const data = sectionData[i];
+      fileLabel.textContent = data.file;
+      accentLabel.textContent = data.accent;
+      sliderThumb.textContent = data.thumb;
+      sliderThumb.style.left = (i * 28 + 5) + '%';
+      rightHeaderLabel.textContent = data.label;
+
+      // Swap video
+      const thumb = document.getElementById('videoThumb');
+      thumb.innerHTML = `<span class="file-label" id="fileLabel">${data.file}</span>` +
+        `<video src="${data.video}" autoplay loop muted playsinline></video>`;
+
+
+      accentBarWrap.classList.remove('blink-active');
+      void accentBarWrap.offsetWidth;
+      accentBarWrap.classList.add('blink-active');
+
+      contentDropdown.classList.remove('open');
+      setTimeout(() => {
+        contentListInner.innerHTML = data.items.map((it, idx) => {
+          const tag = it.rss ? '<span class="rss-tag">RSS</span>' : '';
+          return `<a class="link-item" data-section="${i}" data-item="${idx}" href="${it.url}" target="_blank" rel="noopener">${it.name}${tag}</a>`;
+        }).join('');
+        // Wire up link clicks: RSS opens preview, non-RSS lets default link behavior work
+        contentListInner.querySelectorAll('.link-item').forEach(el => {
+          el.addEventListener('click', (e) => {
+            const sIdx = parseInt(el.dataset.section);
+            const iIdx = parseInt(el.dataset.item);
+            const entry = sectionData[sIdx].items[iIdx];
+            if (entry.rss) {
+              e.preventDefault();
+              openPreview(entry);
+            }
+            // else: default href/target handles it
+          });
+        });
+        contentDropdown.classList.add('open');
+      }, 400);
+
+      progressFill.style.width = progressMap[i] + '%';
+      progressSegs.forEach((seg, s) => seg.classList.toggle('lit', s < (i + 1) * 2));
+    });
+  });
+
+  // ═══ RSS PREVIEW PANEL ═══
+  const previewPanel  = document.getElementById('previewPanel');
+  const previewTitle  = document.getElementById('previewTitle');
+  const previewSource = document.getElementById('previewSource');
+  const previewStatus = document.getElementById('previewStatus');
+  const previewList   = document.getElementById('previewList');
+  const previewClose  = document.getElementById('previewClose');
+
+  function openPreview(entry) {
+    previewTitle.textContent = entry.name;
+    previewSource.textContent = new URL(entry.url).hostname.replace('www.','').toUpperCase();
+    previewStatus.textContent = 'LOADING';
+    previewList.innerHTML = `
+      <div class="preview-loading">
+        <div class="spinner"></div>
+        <div>FETCHING</div>
+      </div>`;
+    previewPanel.classList.add('open');
+    fetchRss(entry);
+  }
+
+  function closePreview() {
+    previewPanel.classList.remove('open');
+  }
+
+  previewClose.addEventListener('click', closePreview);
+
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (!previewPanel.classList.contains('open')) return;
+    if (previewPanel.contains(e.target)) return;
+    if (e.target.closest('.link-item')) return; // don't close when clicking another RSS link
+    closePreview();
+  });
+
+  // ═══ RSS FETCH ═══
+  // Uses rss2json (free, no key, handles CORS + parsing)
+  async function fetchRss(entry) {
+    const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(entry.feed);
+    try {
+      const res = await fetch(api);
+      const data = await res.json();
+      if (data.status !== 'ok' || !data.items) throw new Error('Bad response');
+      renderItems(data.items.slice(0, 15), entry);
+      previewStatus.textContent = 'LIVE · ' + data.items.length;
+    } catch (err) {
+      previewStatus.textContent = 'ERROR';
+      previewList.innerHTML = `
+        <div class="preview-error">
+          COULD NOT FETCH FEED<br>
+          <a class="fallback-link" href="${entry.url}" target="_blank" rel="noopener">[ OPEN SITE ]</a>
+        </div>`;
+    }
+  }
+
+  function renderItems(items, entry) {
+    previewList.innerHTML = items.map(it => {
+      const date = it.pubDate ? new Date(it.pubDate) : null;
+      const dateStr = date && !isNaN(date) ? formatDate(date) : '';
+      const author = (it.author || entry.name).slice(0, 24);
+      return `
+        <a class="preview-item" href="${it.link}" target="_blank" rel="noopener">
+          <div class="preview-item-title">${escapeHtml(it.title || 'Untitled')}</div>
+          <div class="preview-item-meta">
+            <span>${dateStr}</span>
+            <span>${escapeHtml(author)}</span>
+          </div>
+        </a>`;
+    }).join('');
+  }
+
+  function formatDate(d) {
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 3600)   return Math.floor(diff / 60) + 'M AGO';
+    if (diff < 86400)  return Math.floor(diff / 3600) + 'H AGO';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'D AGO';
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    return months[d.getMonth()] + ' ' + d.getDate();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  // ═══ THEME SWITCHER ═══
+  const themes = ['default', 'blood', 'y2k', 'terminal'];
+  const themeBtns = document.querySelectorAll('#themeButtons .icon-btn');
+  themeBtns.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      document.body.setAttribute('data-theme', themes[index]);
+    });
+  });
+</script>
+
+</body>
+</html>
